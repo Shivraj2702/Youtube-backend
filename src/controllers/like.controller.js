@@ -5,6 +5,8 @@ import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 import { Tweet } from "../models/tweet.model.js"
 import { User } from "../models/user.model.js"
+
+
 const toggleVideoLike = asyncHandler(async (req, res) => {
     //TODO: toggle like on video
     const {videoId} = req.params
@@ -14,12 +16,12 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         throw new ApiError(401 , "video is not valid")
     }
 
-    const videoLike = await Like.findOne({videoId , userId})
+    const likedVideos = await Like.findOne({videoId , userId})
 
     let like
     let unlike
 
-    if(videoLike){
+    if(likedVideos){
         unlike = await Like.deleteOne({ video : videoId})
     } else {
         like = await Like.create({
@@ -28,9 +30,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         })
     }
 
-    return res.status(200).json( new ApiResponse( 200 , {}, `User ${like? "like": "Unlike"} video successfully !!`))
-
-
+    return res.status(200).json(new ApiResponse(200, like[0]?.likedVideos || [], "Fetched liked videos successfully!!"));
 
 })
 
@@ -42,13 +42,13 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         throw new ApiError(400 , "commentId invalid")
     }
 
-    const commentLike = await Comment.findOne({ commet : commentId})
+    const commentLike = await Comment.findOne({ comment : commentId})
 
     let like;
     let unlike;
 
     if(commentLike){
-        unlike = await Comment.deleteOne({ commet : commentId})
+        unlike = await Comment.deleteOne({ comment : commentId})
     } else {
         like = await Comment.create({
             video: commentId,
@@ -145,7 +145,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
         new ApiResponse(
             200,
             likes[2].likedVideos,
-            " fetched Liked videos successfully !!"
+            "fetched Liked videos successfully !!"
         )
     )
 })
