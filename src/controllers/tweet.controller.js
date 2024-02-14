@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose"
+import  { isValidObjectId } from "mongoose"
 import {Tweet} from "../models/tweet.model.js"
 import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
@@ -37,8 +37,8 @@ const getUserTweets = asyncHandler(async (req, res) => {
     // TODO: get user tweets
     const { userId } = req.params
 
-    if(!userId){
-        throw new ApiError(401, "user not found !!")
+    if(!isValidObjectId(userId)) {
+        throw new ApiError(401, "userId invalid")
     }
 
    try {

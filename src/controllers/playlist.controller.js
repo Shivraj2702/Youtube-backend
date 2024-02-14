@@ -4,6 +4,7 @@ import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 import { Video} from '../models/video.model.js'
+import { User } from "../models/user.model.js"
 
 
 const createPlaylist = asyncHandler(async (req, res) => {
@@ -11,9 +12,10 @@ const createPlaylist = asyncHandler(async (req, res) => {
     const {name, description} = req.body
 
     if(!name || !description) {
-        throw new ApiError(401, " name and description is needed")
+        throw new ApiError(401, "name and description is needed")
     }
 
+    
     const playlist = await Playlist.create({
         name,
         description, 
@@ -101,21 +103,17 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
         throw new ApiError(401 , "You dont have permission to add video")
     }
 
-    const video = await Video.findById(videoId) 
+    const video = await Video.findById(videoId)
     
     if(!video) {
         throw new ApiError(401 , "video not found")
-    }
-
-    if(Playlist.video.includes(videoId)) {
-        throw new ApiError(401, "videoalready exists")
     }
 
     const Videoplaylist = await Playlist.findByIdAndUpdate(
         playlistId, 
         {
             $push: {
-                video : videoId
+                videos : videoId
             },
         },
         {
