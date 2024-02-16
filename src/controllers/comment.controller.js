@@ -6,14 +6,75 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import {Video} from "../models/video.model.js"
 
 const getVideoComments = asyncHandler(async (req, res) => {
-    //TODO: get all comments for a video
-    const {videoId} = req.params
-    const {page = 1, limit = 10} = req.query
+   
+    const { videoId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid videoId");
+    }
 
-})
+    try {
+        const video = await Video.findById(videoId);
+
+        if (!video) {
+            throw new ApiError(404, "Video not found");
+        }
+
+        const comments = await Comment.aggregate([
+            {
+                $match:{
+                    video:new mongoose.Types.ObjectId(videoId)
+                }
+            },
+            {
+                $skip:(Number(page)-1)*limit
+            },
+            {
+                $limit: Number(limit)
+            },
+            {
+                $lookup:{
+                    from:"users",
+                    localField:"owner",
+                    foreignField:"_id",
+                    pipeline:[
+                        {
+                            $project:{
+                                username:1,
+                                fullName:1,
+                                avatar:1
+                            }
+                        }
+                    ],
+                    as:"owner"
+                }
+            },
+    
+        ])
+
+        const totalComments = await Comment.countDocuments({ video: videoId });
+
+        const response = new ApiResponse(200 ,{
+            
+            data: {
+                comments,
+                page: Number(page),
+                limit: Number(limit),
+                totalComments,
+            },
+        });
+
+        res.status(200).json(response);
+    } catch (error) {
+        
+        console.error(error);
+        throw new ApiError(500, "Internal Server  error while fetching comments");
+    }
+});
 
 const addComment = asyncHandler(async (req, res) => {
-    // TODO: add a comment to a video
+  
     const {commentContent} = req.body
     const { videoId } = req.params
 
@@ -45,7 +106,7 @@ const addComment = asyncHandler(async (req, res) => {
 })
 
 const updateComment = asyncHandler(async (req, res) => {
-    // TODO: update a comment
+  
     const { commentContent } = req.body
     const {videoId} = req.params
     const { commentId } = req.params
@@ -94,12 +155,12 @@ const updateComment = asyncHandler(async (req, res) => {
       )
   
       if(!updatedComment) {
-          throw new ApiError(401 , "somethingwent wrng while updating commnet")
+          throw new ApiError(401 , "something went wrong while updating commnet")
       }
   
       return res.status(200).json(new ApiResponse(200, updateComment, " upated commnet Successfully"))
   } catch (error) {
-    throw new ApiError(500 , "Internal server error somethingwent wrong while updating commnet")
+    throw new ApiError(500 , "Internal server error somethig went wrong while updating commnet")
   }
 })
 
@@ -140,7 +201,7 @@ const deleteComment = asyncHandler(async (req, res) => {
         throw new ApiError(401 , "something went wrog while deleting comment")
     }
 
-    return res.status(200).json(new ApiResponse(200, {}, "deleted  commnet successfully"))
+    return res.status(200).json(new ApiResponse(200, {}, "deleted  comment successfully"))
 
 })
 

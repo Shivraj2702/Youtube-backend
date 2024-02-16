@@ -28,7 +28,7 @@ try {
             {
                 $addFields: {
                     likes: {
-                        $size: { ifNull : ["likes" , []]},
+                        $size: { $ifNull : ["$likes" , []]},
                     }
                 }
             },
@@ -42,7 +42,7 @@ try {
             },
             {
                 $addFields: {
-                    subscriber : { $size : { ifNull : ["$subscriber" ,[] ] } }
+                    subscriber : { $size : { $ifNull : ["$subscriber" ,[] ] } }
                 }
             },
             {
@@ -75,13 +75,13 @@ const getChannelVideos = asyncHandler(async (req, res) => {
     const { userId } = req.params
 
     try {
-     const ChannelVideo = await Video.find({owner : new mongoose.Types.ObjectId(userId)}).count();
+     const ChannelVideo = await Video.find({owner: userId});
  
-     if(!ChannelVideo) {
+     if(!ChannelVideo || ChannelVideo.length === 0) {
          throw new ApiError(401, "video not found")
      }
  
-     return res.status(200).json(new ApiResponse(200 , {ChannelVideo}) , "video fetchted  successfully")
+     return res.status(200).json(new ApiResponse(200 , {ChannelVideo} , "video fetchted  successfully"))
        }    catch (error) {
       throw new ApiError(500 , " something went wrong")
      }

@@ -15,8 +15,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     if (query) {
         filter.$or = [
-            { title: { $regex: query, $options: 'i' } }, // Case-insensitive search in the title
-            { description: { $regex: query, $options: 'i' } } // Case-insensitive search in the description
+            { title: { $regex: query, $options: 'i' } }, 
+            { description: { $regex: query, $options: 'i' } } 
         ];
     }
 
@@ -53,7 +53,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description } = req.body
 
-    // TODO: get video, upload to cloudinary, create video
+    
     if(!title  || !description){
         throw new ApiError(401 , "title and description is needed")
     }
@@ -105,7 +105,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: get video by id
+   
     if(!isValidObjectId(videoId)){
         throw new ApiError(401 , "Invalid videoId")
     }
@@ -172,7 +172,7 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: delete video
+  
     if(!isValidObjectId(videoId)){
         throw new ApiError(401 , "Invalid videoId")
     }
