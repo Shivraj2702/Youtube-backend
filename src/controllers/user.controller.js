@@ -42,10 +42,7 @@ const registerUser = asyncHandler( async (req , res) => {
           throw new ApiError(401 , "user with email or username already register")
      }
 
-     
- 
      const avatarloacalPath = req.files?.avatar[0]?.path;
-     
 
      let coverImageLocalPath 
      if(req.body && Array.isArray(req.files.coverImage) && req.files.coverImage.length> 0){
@@ -317,7 +314,7 @@ const getUserChannelProfile = asyncHandler(async (req , res) => {
           throw new ApiError(400, " user not found")
      }
 
-    const user =  User.aggregate([
+    const channel =  User.aggregate([
           {
                $match: {
                     username: username?.toLowerCase()
@@ -383,7 +380,7 @@ const getUserChannelProfile = asyncHandler(async (req , res) => {
 })
 
 const getWatchHistory = asyncHandler(async (req , res) => {
-     const watchHistory =  User.aggregate([
+     const user =  User.aggregate([
           {
                $match: {
                     _id: new mongoose.Types.ObjectId(req.user._id)
@@ -425,7 +422,7 @@ const getWatchHistory = asyncHandler(async (req , res) => {
      ])
 
      return res.status(201)
-     .json(new ApiResponse(200 , User[0].watchHistory , "watch histoyfetched successfully"))
+     .json(new ApiResponse(200 , user[0].watchHistory , "watch histoyfetched successfully"))
 })
 
 export {
