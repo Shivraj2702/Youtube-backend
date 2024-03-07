@@ -14,7 +14,7 @@ import { Like } from "../models/like.model.js";
 // get all videos based on query, sort, pagination
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
-    console.log(userId);
+   
     const pipeline = [];
 
     if (query) {
@@ -65,7 +65,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
                     {
                         $project: {
                             username: 1,
-                            "avatar.url": 1
+                            avatar: 1
                         }
                     }
                 ]
