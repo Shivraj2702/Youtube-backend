@@ -6,83 +6,99 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import {Video} from "../models/video.model.js"
 
 const getVideoComments = asyncHandler(async (req, res) => {
-   
     const { videoId } = req.params;
     const { page = 1, limit = 10 } = req.query;
-    
-    if (!isValidObjectId(videoId)) {
-        throw new ApiError(400, "Invalid videoId");
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, "Video not found");
     }
 
-    try {
-        const video = await Video.findById(videoId);
-
-        if (!video) {
-            throw new ApiError(404, "Video not found");
+    const commentsAggregate = Comment.aggregate([
+        {
+            $match: {
+                video: new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "comment",
+                as: "likes"
+            }
+        },
+        {
+            $addFields: {
+                likesCount: {
+                    $size: "$likes"
+                },
+                owner: {
+                    $first: "$owner"
+                },
+                isLiked: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$likes.likedBy"] },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        },
+        {
+            $project: {
+                content: 1,
+                createdAt: 1,
+                likesCount: 1,
+                owner: {
+                    username: 1,
+                    fullName: 1,
+                    avatar: 1
+                },
+                isLiked: 1
+            }
         }
+    ]);
 
-        const comments = await Comment.aggregate([
-            {
-                $match:{
-                    video:new mongoose.Types.ObjectId(videoId)
-                }
-            },
-            {
-                $skip:(Number(page)-1)*limit
-            },
-            {
-                $limit: Number(limit)
-            },
-            {
-                $lookup:{
-                    from:"users",
-                    localField:"owner",
-                    foreignField:"_id",
-                    pipeline:[
-                        {
-                            $project:{
-                                username:1,
-                                fullName:1,
-                                avatar:1
-                            }
-                        }
-                    ],
-                    as:"owner"
-                }
-            },
-    
-        ])
+    const options = {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10)
+    };
 
-        const totalComments = await Comment.countDocuments({ video: videoId });
+    const comments = await Comment.aggregatePaginate(
+        commentsAggregate,
+        options
+    );
 
-        const response = new ApiResponse(200 ,{
-            
-            data: {
-                comments,
-                page: Number(page),
-                limit: Number(limit),
-                totalComments,
-            },
-        });
-
-        res.status(200).json(response);
-    } catch (error) {
-        
-        console.error(error);
-        throw new ApiError(500, "Internal Server  error while fetching comments");
-    }
+    return res
+        .status(200)
+        .json(new ApiResponse(200, comments, "Comments fetched successfully"));
 });
 
 const addComment = asyncHandler(async (req, res) => {
   
-    const {commentContent} = req.body
+    const {content} = req.body
     const { videoId } = req.params
 
     if(!isValidObjectId(videoId)) {
         throw new ApiError(401 , "Invalid videoId")
     }
 
-    if(!commentContent) {
+    if(!content) {
         throw new ApiError(401 , "comment is required")
     }
 
@@ -93,7 +109,7 @@ const addComment = asyncHandler(async (req, res) => {
     }
 
     const comment = await Comment.create({
-        content : commentContent,
+        content,
         video,
         owner: req.user._id
     })

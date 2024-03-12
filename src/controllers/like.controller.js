@@ -110,67 +110,75 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 )
 
 const getLikedVideos = asyncHandler(async (req, res) => {
-  
-    const {userId} = req.params
-
-    if(!isValidObjectId(userId)){
-        throw new ApiError(400, "This user id is not valid")
-    }
-
-    const user = await User.findById(userId)
-    if (!user) {
-        throw new ApiError(404, "User not found");
-    }
-
-    const likes = await Like.aggregate([
-
+    const likedVideosAggegate = await Like.aggregate([
         {
-            $lookup:{
+            $match: {
+                likedBy: new mongoose.Types.ObjectId(req.user?._id),
+            },
+        },
+        {
+            $lookup: {
                 from: "videos",
                 localField: "video",
                 foreignField: "_id",
-                as: "likedVideos",
-                pipeline:[
+                as: "likedVideo",
+                pipeline: [
                     {
-                        $lookup:{
+                        $lookup: {
                             from: "users",
-                            localField: "videoOwner",
+                            localField: "owner",
                             foreignField: "_id",
-                            as: "videoOwner",
-                            pipeline:[
-                                {
-                                    $project:{
-                                        fullName: 1,
-                                        username: 1,
-                                        avatar: 1
-                                    }
-                                }
-                            ]
-                        }
+                            as: "ownerDetails",
+                        },
                     },
                     {
-                        $addFields:{
-                            videoOwner:{
-                                $arrayElemAt: ["$videoOwner" , 0]
-                            }
-                        }
-                    }
-                ]
-            }
+                        $unwind: "$ownerDetails",
+                    },
+                ],
+            },
         },
-
-    ]) 
+        {
+            $unwind: "$likedVideo",
+        },
+        {
+            $sort: {
+                createdAt: -1,
+            },
+        },
+        {
+            $project: {
+                _id: 0,
+                likedVideo: {
+                    _id: 1,
+                    videoFile: 1,
+                    thumbnail: 1,
+                    owner: 1,
+                    title: 1,
+                    description: 1,
+                    views: 1,
+                    duration: 1,
+                    createdAt: 1,
+                    isPublished: 1,
+                    ownerDetails: {
+                        username: 1,
+                        fullName: 1,
+                        avatar: 1,
+                    },
+                },
+            },
+        },
+    ]);
 
     return res
-    .status(200)
-    .json(
-        new ApiResponse(
-            200,
-            likes,
-            "fetched Liked videos successfully !!"
-        )
-    )
-})
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                likedVideosAggegate,
+                "liked videos fetched successfully"
+            )
+        );
+});
 
 export {
     toggleCommentLike,

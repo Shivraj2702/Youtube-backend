@@ -98,7 +98,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     }
 
     const videoFileLocalPath = req.files?.videoFile[0].path;
-    const thumbnailLocalPath = req.files?.thumbnail[0].path;
+    const thumbnailLocalPath = req.files?.thumbNail[0].path;
 
     if (!videoFileLocalPath) {
         throw new ApiError(400, "videoFileLocalPath is required");
@@ -118,21 +118,17 @@ const publishAVideo = asyncHandler(async (req, res) => {
     if (!thumbnail) {
         throw new ApiError(400, "Thumbnail not found");
     }
+    const userId = req.user?._id
+    console.log(req.user)
 
     const video = await Video.create({
         title,
         description,
         duration: videoFile.duration,
-        videoFile: {
-            url: videoFile.url,
-            public_id: videoFile.public_id
-        },
-        thumbnail: {
-            url: thumbnail.url,
-            public_id: thumbnail.public_id
-        },
-        owner: req.user?._id,
-        isPublished: false
+        videoFile: videoFile.url,
+        thumbNail: thumbnail.url,
+        owner: userId,
+        isPublished: true
     });
 
     const videoUploaded = await Video.findById(video._id);
@@ -146,16 +142,12 @@ const publishAVideo = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, video, "Video uploaded successfully"));
 });
 
-const getVideoById = asyncHandler(async (req, res) => {
+    const getVideoById = asyncHandler(async (req, res) => {
 
     const { videoId } = req.params; 
 
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid videoId");
-    }
-
-    if (!isValidObjectId(req.user?._id)) {
-        throw new ApiError(400, "Invalid userId");
     }
 
     const video = await Video.aggregate([
@@ -209,7 +201,7 @@ const getVideoById = asyncHandler(async (req, res) => {
                     {
                         $project: {
                             username: 1,
-                            "avatar.url": 1,
+                            avatar: 1,
                             subscribersCount: 1,
                             isSubscribed: 1
                         }
@@ -236,7 +228,7 @@ const getVideoById = asyncHandler(async (req, res) => {
         },
         {
             $project: {
-                "videoFile.url": 1,
+                videoFile: 1,
                 title: 1,
                 description: 1,
                 views: 1,
@@ -264,7 +256,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(req.user?._id, {
         $addToSet: {
             watchHistory: videoId
-        }
+        } 
     });
 
     return res
@@ -400,6 +392,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     if (!video) {
         throw new ApiError(404, "Video not found");
     }
+    
 
     if (video?.owner.toString() !== req.user?._id.toString()) {
         throw new ApiError(
@@ -419,7 +412,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     );
 
     if (!toggledVideoPublish) {
-        throw new ApiError(500, "Failed to toogle video publish status");
+        throw new ApiError(500, "Failed to toggle video publish status");
     }
 
     return res
