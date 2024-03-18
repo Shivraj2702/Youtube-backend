@@ -1,4 +1,5 @@
 import  { isValidObjectId } from "mongoose"
+import mongoose from "mongoose"; 
 import {Tweet} from "../models/tweet.model.js"
 import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
@@ -56,7 +57,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
                     {
                         $project: {
                             username: 1,
-                            "avatar.url": 1,
+                            avatar: 1,
                         },
                     },
                 ],
@@ -150,14 +151,14 @@ const updateTweet = asyncHandler(async (req, res) => {
           new: true
           })
   
-     if(!updateTweet){
+     if(!UpdatedTweet){
           throw new ApiError(401 , " Something went wrong while updaing tweet")
          }
   
      return res
         .status(200)
          .json(
-           new ApiResponse( 201 , {} , "Successfully updated the tweet")
+           new ApiResponse( 201 , UpdatedTweet, "Successfully updated the tweet")
          )
      } catch (error) {
             throw new ApiError(500 , ' Something went wrong in server while updating tweet')

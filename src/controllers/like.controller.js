@@ -37,7 +37,12 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         if(!like) {
             throw new ApiError(400 , " failed to like comment like")
         }
-        console.log(like)
+
+        await Like.create({
+            video: videoId,
+            likedBy: req.user?._id,
+        });
+        
 
         return res.status(200).json(new ApiResponse(200, likedVideos || [], "like video successfully!!"));
     }
@@ -77,37 +82,35 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 })
 
 const toggleTweetLike = asyncHandler(async (req, res) => {
-    const {tweetId} = req.params
-    
-    if(!isValidObjectId(tweetId)) {
-        throw new ApiError(400 , "tweetId invalid")
+    const { tweetId } = req.params;
+
+    if (!isValidObjectId(tweetId)) {
+        throw new ApiError(400, "Invalid tweetId");
     }
 
-    const tweetLike = await Tweet.findOne({ tweet : tweetId})
 
-    if(tweetLike){
-        const unlike = await Tweet.deleteOne({ tweet : tweetId})
+    const likedAlready = await Like.findOne({
+        tweet: tweetId,
+        likedBy: req.user?._id,
+    });
 
-        if(!unlike) {
-            throw new ApiError(400 , "failed to unlike commet like")
-        }
+    if (likedAlready) {
+        await Like.findByIdAndDelete(likedAlready?._id);
 
-        return res.status(200).json( new ApiResponse( 200 , {}, "removed comment like"))
-    } else {
-      const   like = await Tweet.create({
-            tweet: tweetId,
-            likeBy: req.user._id
-        })
-
-        if(!like) {
-            throw new ApiError(400 , " failed to like comment like")
-        }
-
-        return res.status(200).json( new ApiResponse( 200 , like,  "video like successfully "))
+        return res
+            .status(200)
+            .json(new ApiResponse(200, { tweetId, isLiked: false }));
     }
 
-}
-)
+    await Like.create({
+        tweet: tweetId,
+        likedBy: req.user?._id,
+    });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, { isLiked: true }));
+});
 
 const getLikedVideos = asyncHandler(async (req, res) => {
     const likedVideosAggegate = await Like.aggregate([
@@ -151,7 +154,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                 likedVideo: {
                     _id: 1,
                     videoFile: 1,
-                    thumbnail: 1,
+                    thumbNail: 1,
                     owner: 1,
                     title: 1,
                     description: 1,

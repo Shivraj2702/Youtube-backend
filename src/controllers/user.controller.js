@@ -203,7 +203,7 @@ try {
 })
 
 const changeCurrentPassword = asyncHandler(async (req , res) => {
-      const {oldPassword , newPassword} = req.body
+      const {oldPassword, newPassword } = req.body
 
       const user = await  User.findById(req.user?._id) 
 
@@ -217,6 +217,7 @@ const changeCurrentPassword = asyncHandler(async (req , res) => {
 
      await  user.save({validateBeforeSave:false})
 
+
      return res
      .status(200)
      .json(new ApiResponse(200 , {}, "Password changed successfully")
@@ -227,11 +228,11 @@ const changeCurrentPassword = asyncHandler(async (req , res) => {
 const getCurrentUser = asyncHandler(async (req , res)=> {
      return res
      .status(200)
-     .json(200 , req.user, "current user fetched successfully" )
+     .json(new ApiResponse (200 , req.user, "current user fetched successfully") )
 
 })
 
-const updateAccountDetails = asyncHandler(async () =>{
+const updateAccountDetails = asyncHandler(async (req, res) =>{
      const {fullName , email} = req.body
 
      if(!fullName || !email) {
@@ -242,7 +243,7 @@ const updateAccountDetails = asyncHandler(async () =>{
           $set: {
                fullName,
                email
-          }
+            }
      },{
           new: true
      }).select("-password")
@@ -388,9 +389,10 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
      const user = await User.aggregate([
          {
              $match: {
-                 _id: new mongoose.Types.ObjectId(req.user._id)
+                 _id: new mongoose.Types.ObjectId(req.user?._id)
              }
          },
+         
          {
              $lookup: {
                  from: "videos",
