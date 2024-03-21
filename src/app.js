@@ -6,7 +6,7 @@ import morgan from "morgan";
 const app = express()
 
 app.use(cors({
-    origin : 'https://youtube-frontend-xuan.vercel.app/',
+    origin : process.env.CORS_ORIGIN,
     credentials : true
 
 }))
