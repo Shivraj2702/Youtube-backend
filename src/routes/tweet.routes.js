@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { createTweet , updateTweet , getUserTweets , deleteTweet} from '../controllers/Tweet.controller.js';
+import { createTweet , updateTweet , getUserTweets , deleteTweet} from '../controllers/tweet.controller.js';
 
 const router = Router();
 router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
