@@ -84,6 +84,7 @@ const registerUser = asyncHandler( async (req , res) => {
 const loginUser = asyncHandler( async (req , res) => {
       const {username, password , email} = req.body
 
+
       if(!username && !email){
           throw new ApiError(401, "username or email is required")
       }
@@ -111,8 +112,6 @@ const loginUser = asyncHandler( async (req , res) => {
           secure:true
      }
 
-     
-    
      res
      .status(200)
      .cookie("accessToken" , accessToken , options)
