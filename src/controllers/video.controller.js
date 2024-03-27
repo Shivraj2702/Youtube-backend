@@ -322,10 +322,7 @@ const updateVideo = asyncHandler(async (req, res) => {
             $set: {
                 title,
                 description,
-                thumbnail: {
-                    public_id: thumbnail.public_id,
-                    url: thumbnail.url
-                }
+                thumbNail: thumbnail.url
             }
         },
         { new: true }
